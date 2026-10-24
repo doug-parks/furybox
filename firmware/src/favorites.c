@@ -7,6 +7,9 @@ typedef struct {
     uint32_t user, filter;
 } favorites_t;
 static favorites_t favorites __attribute__((section(".pool")));
+#ifndef ENGI_FURY
+#define ENGI_FURY 14u                /* (a host test without core.h: tests/settings_test.c) */
+#endif
 /* FURYBOX: engine 14 (FURY) has no row of its own (factory[14] holds the MIDI LEARN map, factory[15][0..12] the CUSTOM
  * palette): its favourites are the 16 bytes factory[15][16..31] (presets 0..127) */
 static uint8_t *favorite_byte(uint32_t engine, uint32_t preset)
