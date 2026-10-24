@@ -60,7 +60,7 @@ jobs:
 
       - name: JieLi toolchain (download)
         if: steps.tc.outputs.cache-hit != 'true'
-        run: tools/get_toolchain.sh ~/.jieli
+        run: sh tools/get_toolchain.sh ~/.jieli
 
       - name: JieLi AC79 SDK files (cache)
         id: sdk
@@ -109,7 +109,7 @@ jobs:
           version: 3.1.74
 
       - name: Browser emulator
-        run: EMU_PREVIEW=0 web/emu/build.sh
+        run: EMU_PREVIEW=0 sh web/emu/build.sh
 
       - name: Site (installer, editor, emulator)
         run: |
@@ -133,7 +133,7 @@ jobs:
             export GOLDEN_UPDATE=1 BUDGET_UPDATE=1
             echo "rewriting the baselines"
           fi
-          tests/run_tests.sh
+          sh tests/run_tests.sh
 
       - name: Test baselines (artifact)
         if: always()
