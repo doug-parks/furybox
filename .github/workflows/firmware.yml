@@ -1,0 +1,175 @@
+# FURYBOX: build the firmware package with the JieLi toolchain, run the host tests, build the browser emulator,
+# and publish the site (installer, editor, emulator) to GitHub Pages. The JieLi toolchain is Linux x86-64 only, so
+# this runner is the build machine; the toolchain and the three SDK files it needs are cached between runs.
+#   push to main / a v* tag   build, test, deploy the site (a tag also makes a GitHub release with the package)
+#   pull request              build and test only
+#   workflow_dispatch         the same; "update baselines" runs the tests with GOLDEN_UPDATE=1 BUDGET_UPDATE=1 and
+#                             uploads the rewritten tests/*.txt, to commit after a review of the diff
+name: firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: "Rewrite the test baselines (golden renders, CPU budgets) and upload them"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SDK_TAG: AC79NN_SDK_V1.2.1_2023-12-13
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Python packages
+        run: python3 -m pip install pillow==12.3.0 fonttools==4.61.1 numpy==2.5.3
+
+      - name: JieLi toolchain (cache)
+        id: tc
+        uses: actions/cache@v4
+        with:
+          path: ~/.jieli
+          key: jieli-toolchain-${{ hashFiles('tools/get_toolchain.sh') }}
+
+      - name: JieLi toolchain (download)
+        if: steps.tc.outputs.cache-hit != 'true'
+        run: tools/get_toolchain.sh ~/.jieli
+
+      - name: JieLi AC79 SDK files (cache)
+        id: sdk
+        uses: actions/cache@v4
+        with:
+          path: ~/fw-AC79_AIoT_SDK
+          key: ac79-sdk-${{ env.SDK_TAG }}-sparse-tools
+
+      - name: JieLi AC79 SDK files (clone)
+        if: steps.sdk.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse --branch "$SDK_TAG" \
+            https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK.git ~/fw-AC79_AIoT_SDK
+          git -C ~/fw-AC79_AIoT_SDK sparse-checkout set cpu/wl82/tools
+          ls -la ~/fw-AC79_AIoT_SDK/cpu/wl82/tools
+
+      - name: Build the firmware
+        id: fw
+        run: |
+          export JIELI_TOOLCHAIN="$HOME/.jieli/toolchain" AC79_SDK="$HOME/fw-AC79_AIoT_SDK"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            python3 tools/build.py --release "${GITHUB_REF#refs/tags/v}"
+          else
+            python3 tools/build.py
+          fi
+          PKG=$(ls build/*.fwsc | head -n 1)
+          echo "pkg=$PKG" >> "$GITHUB_OUTPUT"
+          ls -la build/*.fwsc build/felucca.bin
+          sha256sum build/*.fwsc
+
+      - name: Firmware package (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: furybox-firmware
+          path: |
+            build/*.fwsc
+            build/felucca.bin
+            build/felucca.dis
+
+      - name: Target cost budget
+        continue-on-error: true
+        run: python3 tests/target_budget.py build/felucca.dis tests/target_budget.txt
+
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.74
+
+      - name: Browser emulator
+        run: EMU_PREVIEW=0 web/emu/build.sh
+
+      - name: Site (installer, editor, emulator)
+        run: |
+          VER=$(sed -n 's/^#define FELUCCA_VERSION "v\([^"]*\)".*/\1/p' firmware/src/felucca.c | head -n 1)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VER="${GITHUB_REF#refs/tags/v}"; fi
+          python3 web/make_site.py "${{ steps.fw.outputs.pkg }}" "$VER" site
+          mkdir -p site/webapp/try
+          cp -r build/emu/. site/webapp/try/
+          find site -maxdepth 3 | sort
+
+      - name: Site (pages artifact)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Host tests
+        env:
+          AC79_SDK: ${{ format('{0}/fw-AC79_AIoT_SDK', '/home/runner') }}
+        run: |
+          if [ "${{ inputs.update_baselines }}" = "true" ]; then
+            export GOLDEN_UPDATE=1 BUDGET_UPDATE=1
+            echo "rewriting the baselines"
+          fi
+          tests/run_tests.sh
+
+      - name: Test baselines (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-baselines
+          path: |
+            tests/golden.txt
+            tests/cpu_baseline.txt
+            tests/target_budget.txt
+            tests/union_golden.txt
+            firmware/engines/tests/golden.txt
+
+  deploy:
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: furybox-firmware
+          path: dist
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.fwsc --repo "$GITHUB_REPOSITORY" \
+            --title "FURYBOX $GITHUB_REF_NAME" --generate-notes

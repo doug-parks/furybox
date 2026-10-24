@@ -1,3 +1,11 @@
+# FURYBOX licensing
+
+FURYBOX is a fork of Felucca. What FURYBOX adds (the FURY engine, `firmware/src/eng_fury.c`; `tests/fury_host.c`; the
+changes that register it; the CI workflow and this site) is Copyright (C) 2026 Doug Parks, GPL-3.0-only like Felucca.
+FURYBOX is an independent implementation of a Poly-800 style synthesizer: it contains no code or data of KORG's
+Poly-800 or of Full Bucket Music's Fury-800 plug-in, which inspired it. KORG and Poly-800 are trademarks of KORG Inc.;
+Fury-800 is Full Bucket Music's. Neither is affiliated with FURYBOX. The rest of this document is Felucca's.
+
 # Felucca licensing
 
 Felucca is free software, licensed under the GNU General Public License, version 3 only

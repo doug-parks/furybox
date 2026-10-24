@@ -1687,7 +1687,7 @@ function makeMockDevice(opt = {}) {
     E("MIDI", ["USB", "TRS"], 0), E("SYNC", NDASH, 0), E("ROUT", ["CH1-4", "SEL", "CH5-8", "CH9-12", "CH13-16", "TRACK"], 0), D("CPU", F.INT, 0, 0, 0),
     D("SLOT", F.INT, 1, 4, 1), E("NAME", NDASH, 0), E("LOAD", NGO, 0), E("SAVE", NGO, 0),
     E("ENG", ["ANALOG", "-", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO", "WHEEL",
-      "GRAIN", "PHYS", "DRUM", "NOISE", "FM6", "SLICE"], 0), E("SET", NGO, 0),
+      "GRAIN", "PHYS", "DRUM", "NOISE", "FM6", "SLICE", "FURY"], 0), E("SET", NGO, 0),
     E("CLRSQ", NGO, 0), E("INIT", NGO, 0),
     E("TYPE", ["ROOM", "SPRING", "HALL"], 2),       /* G_RTYPE (id 24, was G_DRCH): the reverb's model (HALL: 1.2) */
     D("-", F.INT, 0, 0, 0), D("-", F.INT, 0, 0, 0),   /* G_DRLVL, G_DRREV: inert since 1.0 */
@@ -1695,6 +1695,8 @@ function makeMockDevice(opt = {}) {
   const NONE = D("-", F.INT, 0, 0, 0);
   const RATIO = [".5", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "14", "16"];
   const P = (name, e, env = [10, 70, 90, 60], mono = 0, pat = 0) => ({ name, e, env, mono, pat });
+  /* FURY (FURYBOX, src/eng_fury.c): a DCO value is S / Q (saw / square weights) and the footages on (16' 8' 4' 2') */
+  const FURY_DCO = ["S", "Q"].flatMap((w) => [...Array(16).keys()].map((h) => w + (h & 8 ? "1" : "-") + (h & 4 ? "8" : "-") + (h & 2 ? "4" : "-") + (h & 1 ? "2" : "-")));
   const ENG = [
     { name: "ANALOG", titles: ["OSC", "FLT"], edit: [E("WAVE", ["SAW", "SQR", "TRI", "SIN", "PWM", "SYNC", "SUB"], 0), D("DTN", F.INT, 0, 127, 10, null, "ct"), D("MIX", F.PCT, 0, 127, 64),
         D("NOIS", F.PCT, 0, 127, 0), D("CUT", F.CUTOFF, 0, 127, 90), D("RES", F.PCT, 0, 127, 30), D("DRV", F.PCT, 0, 127, 0), D("KTR", F.PCT, 0, 127, 64)],
@@ -1774,6 +1776,14 @@ function makeMockDevice(opt = {}) {
         E("DIV", ["4", "8", "16", "32", "AUTO", "MAN"], 2), D("START", F.INT, 0, 31, 0), D("PTCH", F.SEMI, -24, 24, 0),
         E("MODE", ["ONE", "GATE", "LOOP"], 0), E("REV", ["OFF", "ON"], 0), D("DCAY", F.TIME, 0, 127, 127), D("TONE", F.INT, 0, 127, 127)],
       presets: [P("CHOP", [0, 2, 0, 0, 0, 0, 127, 127], [0, 127, 127, 30], 0, 9), P("STUTTER", [0, 1, 0, 0, 1, 0, 90, 110], [0, 127, 127, 12], 0, 10)] },
+    { name: "FURY", titles: ["DCO", "VCF"], edit: [E("DCO1", FURY_DCO, 12), E("DCO2", ["OFF", ...FURY_DCO], 0), D("INTV", F.SEMI, -24, 24, 0), D("DTUN", F.INT, 0, 127, 0),
+        D("CUT", F.CUTOFF, 0, 127, 90), D("RES", F.PCT, 0, 127, 20), E("KBD", ["OFF", "HALF", "FULL"], 1), D("NOIS", F.PCT, 0, 127, 0)],   /* FURYBOX (14) */
+      presets: [P("POLY BRASS", [12, 0, 0, 0, 68, 20, 1, 0], [22, 60, 100, 40], 0, 6), P("800 STRINGS", [15, 13, 0, 18, 58, 10, 1, 0], [70, 90, 115, 85], 0, 5),
+        P("SQR ORGAN", [31, 21, 7, 0, 110, 0, 2, 0], [0, 64, 127, 20], 0, 6), P("BELL 800", [18, 18, 19, 5, 80, 40, 2, 0], [0, 95, 0, 90], 0, 7),
+        P("DCO BASS", [8, 25, -12, 8, 45, 40, 0, 0], [0, 55, 60, 25], 1, 2), P("POLY LEAD", [4, 5, 0, 25, 85, 30, 1, 0], [2, 70, 100, 40], 1, 4),
+        P("WHALE PAD", [8, 21, 0, 30, 50, 25, 1, 0], [90, 90, 110, 100], 0, 5), P("HARPSI 800", [28, 20, 12, 3, 100, 20, 2, 0], [0, 75, 0, 35], 0, 3),
+        P("NOISE SWEEP", [0, 0, 0, 0, 60, 60, 0, 127], [60, 90, 100, 90], 0, 5), P("FUNK CLAV", [7, 0, 0, 0, 70, 50, 2, 0], [0, 60, 30, 20], 0, 6),
+        P("CHOIR 800", [10, 13, 0, 12, 55, 15, 1, 5], [60, 90, 120, 90], 0, 5), P("DOUBLE SAW", [15, 16, 0, 20, 90, 20, 1, 0], [5, 70, 110, 50], 0, 13)] },
   ];
   const FM6_E = ENG.findIndex((e) => e.name === "FM6"), FM6_OWN = FM6.FACTORY_PK.length, DRUM_E = ENG.findIndex((e) => e.name === "DRUM");
   /* factory PATTERNS[] (engines.c; the device loads them from SAVE > PHRASES, presets only suggest one): absolute
@@ -2425,7 +2435,7 @@ function enumShown(d) {
 /* the order the device shows its engines in (src/engines.c ENGINE_ORDER): the lists here follow it, the protocol keeps
    the engine numbers. engineOrder(names): the indices of names in that order, "-" (a reserved number) left out; a name
    the list does not know (another firmware) follows in index order */
-const ENGINE_ORDER = ["ANALOG", "FM6", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO", "WHEEL", "GRAIN", "PHYS", "NOISE",
+const ENGINE_ORDER = ["ANALOG", "FURY", "FM6", "DIGITAL", "PHASE", "LOFI", "SAMPLE", "VOICE", "TRIO", "WHEEL", "GRAIN", "PHYS", "NOISE",
   "SLICE", "DRUM"];
 function engineOrder(names) {
   const rank = (n) => { const k = ENGINE_ORDER.indexOf(n); return k < 0 ? ENGINE_ORDER.length : k; };

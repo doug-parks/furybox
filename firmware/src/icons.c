@@ -155,6 +155,7 @@ static const icon_map_t ICON_MAP[] = {
     {"FREQ", ICON_CUTOFF}, {"TRK", ICON_KEYTRACK}, {"DRFT", ICON_SWEEP},   /* NOISE (COLR, DENS, CRSH: above) */
     {"MLVL", ICON_MOD}, {"MRAT", ICON_RATIO}, {"MEG", ICON_DECAY}, {"VMOD", ICON_ACCENT}, {"DTUN", ICON_DETUNE},
     {"SLOT", ICON_LOAD},                                                    /* FM6 (ALG, FB: above) */
+    {"DCO1", ICON_WAVE}, {"DCO2", ICON_WAVE}, {"INTV", ICON_TRANSPOSE}, {"KBD", ICON_KEYTRACK},   /* FURY (FURYBOX) */
     /* fixed columns drawn by ui_draw.c (STEP page, preset browser) */
     {"NOTE", ICON_PITCH}, {"STEP", ICON_STEPS}, {"FLAG", ICON_ACCENT}, {"ACC", ICON_ACCENT}, {"LANE", ICON_DRUM}, {"HIT", ICON_GATE}, {"SLD", ICON_SLIDE},
     {"TRACK", ICON_MIX},                  /* TRACKS page (LEVEL, LEN, PAN: above) */
@@ -253,6 +254,7 @@ static uint32_t engine_icon(const char *name)
         {"PHYS", ICON_PHYS},
         {"DRUM", ICON_DRUM},
         {"NOISE", ICON_NOISE},
+        {"FURY", ICON_PULSE},                 /* FURY (FURYBOX): the Poly-800's square footages */
         {"FM6", ICON_MOD},                    /* (symbol_modular: six operators patched; a glyph of its own wanted) */
     };
     uint32_t i;

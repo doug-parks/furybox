@@ -7,23 +7,32 @@ typedef struct {
     uint32_t user, filter;
 } favorites_t;
 static favorites_t favorites __attribute__((section(".pool")));
+/* FURYBOX: engine 14 (FURY) has no row of its own (factory[14] holds the MIDI LEARN map, factory[15][0..12] the CUSTOM
+ * palette): its favourites are the 16 bytes factory[15][16..31] (presets 0..127) */
+static uint8_t *favorite_byte(uint32_t engine, uint32_t preset)
+{
+    if (engine == ENGI_FURY)
+        return preset < 128u ? &favorites.factory[15][16u + preset / 8u] : 0;
+    return engine < NENGINES && engine < 14u && preset < 256u ? &favorites.factory[engine][preset / 8u] : 0;
+}
 static int favorite_has(uint32_t engine, uint32_t preset)
 {
+    const uint8_t *b;
     if (engine == NENGINES)
         return preset < UP_SLOTS && ((favorites.user >> preset) & 1u);
-    return engine < NENGINES && engine < 16u && preset < 256u &&
-        ((favorites.factory[engine][preset / 8u] >> (preset % 8u)) & 1u);
+    b = favorite_byte(engine, preset);
+    return b && ((*b >> (preset % 8u)) & 1u);
 }
 static int favorite_set(uint32_t engine, uint32_t preset, int on)
 {
-    if (engine > NENGINES || (engine == NENGINES ? preset >= UP_SLOTS : engine >= 16u || preset >= 256u))
+    if (engine > NENGINES || (engine == NENGINES ? preset >= UP_SLOTS : !favorite_byte(engine, preset)))
         return 0;
     if (favorite_has(engine, preset) == !!on) return 0;
     if (engine == NENGINES) {
         if (on) favorites.user |= 1u << preset;
         else favorites.user &= ~(1u << preset);
     } else {
-        uint8_t *b = &favorites.factory[engine][preset / 8u];
+        uint8_t *b = favorite_byte(engine, preset);
         if (on) *b |= (uint8_t)(1u << (preset % 8u));
         else *b &= (uint8_t)~(1u << (preset % 8u));
     }
