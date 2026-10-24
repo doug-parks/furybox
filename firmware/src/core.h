@@ -33,9 +33,9 @@
 #define ENGI_FURY 14u            /* FURY (eng_fury.c, FURYBOX): the Poly-800 style synth */
 #define ENGI_DIGITAL 1u          /* reserved without FELUCCA_FM4: never selectable (eng_ok), its sounds load as FM6 */
 #define NENG_SHOWN (NENGINES - !FELUCCA_FM4 - !FELUCCA_SLICE - FELUCCA_FM4)   /* the engines one can pick: PRESETS, the EDIT layer, the editor,
-                                  * (FURYBOX: a FELUCCA_FM4 build keeps DIGITAL and leaves FURY out, eng_ok: the EDIT layer's
-                                  * 16 cells hold 14 engines + INIT + CLEAN INIT) */
-                                                * in the display order of engines.c ENGINE_ORDER */
+                                  * in the display order of engines.c ENGINE_ORDER (FURYBOX: a FELUCCA_FM4 build keeps
+                                  * DIGITAL and leaves FURY out, eng_ok: the EDIT layer's 16 cells hold 14 engines + INIT +
+                                  * CLEAN INIT) */
 #define UP_SLOTS 32u             /* user presets (upreset.c) */
 
 /* ------------------------------------------------------- parameters --- */
