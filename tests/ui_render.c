@@ -1642,7 +1642,7 @@ static void draw(int s)
     }
     if (s == S_SPLASH) {                          /* the power-on splash (main.c, before the UI): its lines, the version
                                                    * shown FELUCCA_VERSION (run_tests.sh: src/felucca.c's) */
-        static const char WANT[] = "Felucca|" FELUCCA_VERSION "|H\xFCgelton Instruments|with community";
+        static const char WANT[] = "FURYBOX|" FELUCCA_VERSION "|Poly-800 style synth|on Felucca";   /* (FURYBOX: ui_draw.c SPLASH_LINES) */
         splash_seen[0] = 0;
         in_splash = 1;
         draw_splash();
@@ -1666,7 +1666,8 @@ static void draw(int s)
                         if (x - q0 < ix) ix = x - q0;
                         if (y - q0 < iy) iy = y - q0;
                     }
-            if (bad || ix != 16 || iy != 16) {
+            /* (the top: 16 by the capitals; FURYBOX's round O overshoots the cap height by 1 px, so 15 passes too) */
+            if (bad || ix != 16 || iy < 15 || iy > 16) {
                 if (rep) fprintf(rep, "FIND %-26s the splash square not whole (edges %s) or its text not 16 px in (left %d, top %d)\n",
                                  cur_name, bad ? "off" : "ok", (int)ix, (int)iy);
                 nfind++;
