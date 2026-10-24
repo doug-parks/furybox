@@ -146,6 +146,10 @@ jobs:
             tests/target_budget.txt
             tests/union_golden.txt
             firmware/engines/tests/golden.txt
+            build/ui_new/report.txt
+            build/ui_new/align.txt
+            build/ui_fm4/report.txt
+            build/gen/ui_fonts.h
 
   deploy:
     if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
