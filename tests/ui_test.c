@@ -4033,7 +4033,8 @@ static int test_quick_layers(void)
     ok = TSEL->eng_req == 2u && TSEL->preset == 0u && ui.layer == LAYER_EDIT && sync_reload && !gates();
     key_up(white(eng_rank(2))); frame();
     key_down(white(1)); key_up(white(1)); frame();
-    ok &= TSEL->eng_req == ENGI_FURY;                   /* (G3: FURY, second in ENGINE_ORDER; FURYBOX) */
+    ok &= TSEL->eng_req == (FELUCCA_FM4 ? ENGI_FM6 : ENGI_FURY);   /* (G3: FURY, second in ENGINE_ORDER; FURYBOX. A
+                                                         * FELUCCA_FM4 build has no FURY: FM6, as before) */
     key_down(white(NENG_SHOWN - 1u)); key_up(white(NENG_SHOWN - 1u)); frame();
     ok &= TSEL->eng_req == ENGI_DRUM;                   /* (the last key: DRUM) */
     ok &= !memcmp(TSEL->step, before.step, sizeof before.step) && TSEL->p[P_SLEN] == before.p[P_SLEN] &&

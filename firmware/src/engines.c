@@ -117,7 +117,9 @@ static const char *snd_missing(const track_t *t, uint32_t *code)
  * stores and the protocol hold them); only this table orders them */
 static const uint8_t ENGINE_ORDER[NENG_SHOWN] = {
     0,                           /* ANALOG */
+#if !FELUCCA_FM4
     ENGI_FURY,                   /* FURY (FURYBOX) */
+#endif
     12,                          /* FM6 */
 #if FELUCCA_FM4
     1,                           /* DIGITAL */
@@ -132,7 +134,11 @@ static const uint8_t ENGINE_ORDER[NENG_SHOWN] = {
 
 /* the engines one can pick (engine 1 only with FELUCCA_FM4), in ENGINE_ORDER: eng_ok(e), the n-th of them
  * eng_vis(n), e's place among them eng_rank(e), the next / previous one eng_step(e, dir) (wraps) */
-static int eng_ok(uint32_t e) { return e < NENGINES && (FELUCCA_FM4 || e != ENGI_DIGITAL) && (FELUCCA_SLICE || e != 13u); }
+static int eng_ok(uint32_t e)
+{
+    return e < NENGINES && (FELUCCA_FM4 || e != ENGI_DIGITAL) && (FELUCCA_SLICE || e != 13u) &&
+           (!FELUCCA_FM4 || e != ENGI_FURY);          /* (FURYBOX: a FELUCCA_FM4 build has no room for FURY, core.h) */
+}
 static uint32_t eng_vis(uint32_t n) { return ENGINE_ORDER[n % NENG_SHOWN]; }
 static uint32_t eng_rank(uint32_t e)
 {
@@ -192,6 +198,8 @@ static const struct {
 #define NPATTERNS (sizeof PATTERNS / sizeof PATTERNS[0])
 
 /* the parts at power-on (engine, preset, PATTERNS[n - 1] in the sequencer, 0 = empty: all are): bass, pad, lead, drums */
-static const uint8_t TRK_DEF[NPART][3] = {{ENGI_FURY, 4, 0}, {ENGI_FURY, 1, 0}, {ENGI_FURY, 5, 0}, {ENGI_DRUM, 0, 0}};
-                                                /* FURYBOX: FURY DCO BASS, FURY 800 STRINGS, FURY POLY LEAD, DRUM KIT */
+static const uint8_t TRK_DEF[NPART][3] = {{0, 4, 0}, {ENGI_FM6, 4, 0}, {3, 0, 0}, {ENGI_DRUM, 0, 0}}; /* ANALOG ACID,
+                                                                       * FM6 PAD (was DIGITAL PAD), LOFI PULSE LD, DRUM KIT
+                                                                       * (FURYBOX keeps Felucca's: the tests and old projects
+                                                                       * assume them; FURY is one EDIT + G3 away) */
 static uint32_t trk_def_engine(uint32_t i) { return TRK_DEF[i % NPART][0]; }
