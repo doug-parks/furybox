@@ -166,7 +166,7 @@ async function editorMock() {
     await rq(E.req.uiSet(3, 0));
     prefs = await E.readDevicePreferences(rq, info, names, prefs);
     const rows = E.devicePresetRows(info, names, prefs).filter((r) => !r.user), eng = [...new Set(rows.map((r) => r.engine))];
-    ok(eng[0] === 0 && eng[1] === 12 && eng[eng.length - 1] === 10, "editor: device presets in the device's engine order");
+    ok(eng[0] === 0 && eng[1] === 14 && eng[2] === 12 && eng[eng.length - 1] === 10, "editor: device presets in the device's engine order (ANALOG, FURY, FM6 .. DRUM)");
   }
   const none = await E.readDevicePreferences(() => { throw new Error("unexpected request"); }, { uiCaps: 0 }, []);
   ok(none === null, "editor: old firmware receives no unsupported preference requests");

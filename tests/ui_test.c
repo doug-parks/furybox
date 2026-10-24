@@ -4109,7 +4109,9 @@ static int test_quick_layers(void)
     TSEL->p[P_E0] = (int16_t)(TSEL->p[P_E0] + 5);
     press(B_OCTUP);
     bad += check("EDIT + the key after the engines: INITIALIZE SOUND? dialog (closes the layer, no tap); OCT+ inits", ok && !ui.confirm &&
-                 msg_is("SOUND INIT") && TSEL->p[P_E0] == ENGINES[eng_step(0, 1)]->presets[0].e[0]);
+                 msg_is("SOUND INIT") && TSEL->p[P_E0] == ENGINES[TSEL->eng_req % NENGINES]->presets[0].e[0]);
+    /* (INIT: the track's own engine's first preset, SAMPLE's here. Felucca compared with eng_step(0, 1)'s, FM6, whose
+     * first E1 happened to equal SAMPLE's; FURYBOX puts FURY there, E1 12: compare with the engine INIT loads) */
 
     /* no layer in the menu or a dialog: GLO + a key plays */
     ui_power_on(); hold(B_HOME);
